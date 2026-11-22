@@ -1,58 +1,95 @@
-import { mongodbAdapter } from "@better-auth/mongo-adapter";
-import { betterAuth } from "better-auth";
-import { MongoClient } from "mongodb";
-import { z } from "zod/mini";
+import { mongodbAdapter } from "@better-auth/mongo-adapter"
+import { betterAuth } from "better-auth"
+import { APIError, createAuthMiddleware } from "better-auth/api"
+import { MongoClient } from "mongodb"
+import { z } from "zod/mini"
 
-const mongodbUri = process.env.MONGODB_SECRET_URI;
+const mongodbUri = process.env.MONGODB_SECRET_URI
 
 if (!mongodbUri) {
-    throw new Error("MONGODB_SECRET_URI is required to initialize authentication.");
+  throw new Error(
+    "MONGODB_SECRET_URI is required to initialize authentication."
+  )
 }
 
-const client = new MongoClient(mongodbUri);
-const db = client.db("mentor-lagbe");
+const globalForMongo = globalThis as typeof globalThis & {
+  mentorLagbeMongoClient?: MongoClient
+}
+
+const client =
+  globalForMongo.mentorLagbeMongoClient ?? new MongoClient(mongodbUri)
+globalForMongo.mentorLagbeMongoClient = client
+export const db = client.db("mentor-lagbe")
 const signupRoleValidator =
-    process.env.NODE_ENV === "development"
-        ? z.enum(["student", "tutor", "admin"])
-        : z.enum(["student", "tutor"]);
+  process.env.NODE_ENV === "development"
+    ? z.enum(["student", "tutor", "admin"])
+    : z.enum(["student", "tutor"])
 
 export const auth = betterAuth({
-    emailAndPassword: {
-        enabled: true,
-    },
-    user: {
-        modelName: "user",
-        additionalFields: {
-            role: {
-                type: ["student", "tutor", "admin"],
-                required: false,
-                defaultValue: "student",
-                input: true,
-                validator: {
-                    input: signupRoleValidator,
-                },
-            },
-            plan: {
-                type: ["free", "pro"],
-                required: false,
-                defaultValue: "free",
-                input: false,
-            },
-            phone: {
-                type: "string",
-                required: false,
-                defaultValue: "",
-                input: true,
-            },
-            bio: {
-                type: "string",
-                required: false,
-                defaultValue: "",
-                input: true,
-            },
+  emailAndPassword: {
+    enabled: true,
+  },
+  user: {
+    modelName: "user",
+    additionalFields: {
+      role: {
+        type: ["student", "tutor", "admin"],
+        required: false,
+        defaultValue: "student",
+        input: true,
+        validator: {
+          input: signupRoleValidator,
         },
+      },
+      plan: {
+        type: ["free", "pro"],
+        required: false,
+        defaultValue: "free",
+        input: false,
+      },
+      phone: {
+        type: "string",
+        required: false,
+        defaultValue: "",
+        input: true,
+      },
+      bio: {
+        type: "string",
+        required: false,
+        defaultValue: "",
+        input: true,
+      },
+      isActive: {
+        type: "boolean",
+        required: false,
+        defaultValue: true,
+        input: false,
+      },
     },
-    database: mongodbAdapter(db, {
-        client,
+  },
+  hooks: {
+    before: createAuthMiddleware(async (context) => {
+      if (context.path !== "/sign-in/email") {
+        return
+      }
+
+      const email = context.body?.email
+      if (typeof email !== "string") {
+        return
+      }
+
+      const user = await db
+        .collection("user")
+        .findOne({ email }, { projection: { isActive: 1 } })
+
+      if (user?.isActive === false) {
+        throw new APIError("FORBIDDEN", {
+          message: "This account has been deactivated.",
+        })
+      }
     }),
-});
+  },
+  database: mongodbAdapter(db, {
+    client,
+  }),
+})
