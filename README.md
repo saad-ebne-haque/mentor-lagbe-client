@@ -12,6 +12,10 @@ npx shadcn@latest add button
 
 This will place the ui components in the `components` directory.
 
+## Homepage hero
+
+The homepage has a responsive Bengali hero with a Browse Tuitions link to `/tuitions` and a locally stored education photo at `public/mentorlagbe-hero-study.jpg`. The photo is from Unsplash: [view the source image](https://images.unsplash.com/photo-1522202176988-66273c2fd55f).
+
 ## Using components
 
 To use the components in your app, import them as follows:
