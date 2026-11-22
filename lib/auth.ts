@@ -21,6 +21,7 @@ export const auth = betterAuth({
         enabled: true,
     },
     user: {
+        modelName: "user",
         additionalFields: {
             role: {
                 type: ["student", "tutor", "admin"],
@@ -30,6 +31,24 @@ export const auth = betterAuth({
                 validator: {
                     input: signupRoleValidator,
                 },
+            },
+            plan: {
+                type: ["free", "pro"],
+                required: false,
+                defaultValue: "free",
+                input: false,
+            },
+            phone: {
+                type: "string",
+                required: false,
+                defaultValue: "",
+                input: true,
+            },
+            bio: {
+                type: "string",
+                required: false,
+                defaultValue: "",
+                input: true,
             },
         },
     },

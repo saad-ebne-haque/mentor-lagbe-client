@@ -19,3 +19,15 @@ To use the components in your app, import them as follows:
 ```tsx
 import { Button } from "@/components/ui/button";
 ```
+
+## Demo accounts
+
+These demo accounts use the reserved `.test` email domain. Sign in at `/sign-in`.
+
+| Role | Email |
+| --- | --- |
+| Admin | `admin@mentorlagbe.test` |
+| Tutor | `tutor@mentorlagbe.test` |
+| Student | `student@mentorlagbe.test` |
+
+Passwords are intentionally not stored in this repository because these are active account credentials. Keep them in a password manager and rotate or remove the demo accounts before using a production database.
