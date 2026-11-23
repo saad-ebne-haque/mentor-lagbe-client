@@ -1,3 +1,5 @@
+import { apiOrigin } from "./urls"
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null
 }
@@ -29,33 +31,6 @@ function isNonNegativeInteger(value: unknown): value is number {
   return typeof value === "number" && Number.isInteger(value) && value >= 0
 }
 
-function getApiOrigin() {
-  const configuredUrl = process.env.NEXT_PUBLIC_API_URL?.trim()
-
-  if (!configuredUrl) {
-    throw new Error("NEXT_PUBLIC_API_URL is not configured.")
-  }
-
-  let apiUrl: URL
-
-  try {
-    apiUrl = new URL(configuredUrl)
-  } catch {
-    throw new Error("NEXT_PUBLIC_API_URL must be a valid server URL.")
-  }
-
-  if (
-    (apiUrl.protocol !== "http:" && apiUrl.protocol !== "https:") ||
-    apiUrl.pathname !== "/" ||
-    apiUrl.search ||
-    apiUrl.hash
-  ) {
-    throw new Error("NEXT_PUBLIC_API_URL must contain only the server origin.")
-  }
-
-  return apiUrl.origin
-}
-
 async function getApiToken() {
   const tokenResponse = await fetch("/api/auth/token", {
     credentials: "include",
@@ -80,7 +55,6 @@ async function getApiToken() {
 }
 
 export async function getStudentDashboardSummary(): Promise<StudentDashboardSummary> {
-  const apiOrigin = getApiOrigin()
   const token = await getApiToken()
   const response = await fetch(`${apiOrigin}/api/dashboard/student`, {
     headers: {
@@ -116,7 +90,6 @@ export async function getStudentDashboardSummary(): Promise<StudentDashboardSumm
 }
 
 export async function createProCheckoutSession() {
-  const apiOrigin = getApiOrigin()
   const token = await getApiToken()
 
   const checkoutResponse = await fetch(`${apiOrigin}/api/payments/checkout`, {

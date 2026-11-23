@@ -1,11 +1,9 @@
 import { inferAdditionalFields, jwtClient } from "better-auth/client/plugins"
 import { createAuthClient } from "better-auth/react"
 import type { auth } from "./auth"
+import { clientOrigin } from "./urls"
 
 export const authClient = createAuthClient({
   plugins: [inferAdditionalFields<typeof auth>(), jwtClient()],
-  baseURL:
-    process.env.NODE_ENV === "development"
-      ? "http://localhost:3000/"
-      : "https://mentor-lagbe-one.vercel.app/",
+  baseURL: clientOrigin,
 })

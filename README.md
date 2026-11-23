@@ -46,17 +46,18 @@ The profile overview is read-only; use **Edit profile** to open the separate edi
 
 ## Express API authentication
 
-Better Auth's JWT plugin is enabled for server API authorization. Set
-`BETTER_AUTH_URL` to the same base URL used by the Better Auth deployment; the
-Express server uses the same value to verify token issuer and audience. A signed
-in client can request a token from `GET /api/auth/token` and send it as a Bearer
-token to protected Express endpoints.
+Better Auth's JWT plugin is enabled for server API authorization. The client
+origin and Express API origin are selected from `NODE_ENV` in
+`client/lib/urls.ts`: local development uses `http://localhost:3000` and
+`http://localhost:5000`; production uses the deployed Vercel origins. The
+Express server uses the same client origin to verify token issuer and audience.
+Keep the matching origins in `server/config.js` when deployment domains change.
+A signed-in client can request a token from `GET /api/auth/token` and send it as
+a Bearer token to protected Express endpoints.
 
 The pricing page uses this token to start the monthly Pro subscription through
-the Express API. Set `NEXT_PUBLIC_API_URL` in `client/.env.local` to the Express
-server origin, for example `http://localhost:5000/` for local work. Set the same
-variable in the client hosting environment to the deployed Express API's HTTPS
-origin. Do not add a path after the origin.
+the Express API. No URL environment variables are required for client/API
+origins.
 
 The payment success and cancellation pages are available at `/payment/success`
 and `/payment/cancel`. Pro is activated only after the server verifies Stripe's

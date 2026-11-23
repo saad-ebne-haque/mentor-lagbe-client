@@ -4,6 +4,7 @@ import { APIError, createAuthMiddleware } from "better-auth/api"
 import { jwt } from "better-auth/plugins"
 import { MongoClient } from "mongodb"
 import { z } from "zod/mini"
+import { clientOrigin } from "./urls"
 
 const mongodbUri = process.env.MONGODB_SECRET_URI
 
@@ -27,6 +28,7 @@ const signupRoleValidator =
     : z.enum(["student", "tutor"])
 
 export const auth = betterAuth({
+  baseURL: clientOrigin,
   emailAndPassword: {
     enabled: true,
   },
@@ -96,8 +98,8 @@ export const auth = betterAuth({
   plugins: [
     jwt({
       jwt: {
-        issuer: process.env.BETTER_AUTH_URL,
-        audience: process.env.BETTER_AUTH_URL,
+        issuer: clientOrigin,
+        audience: clientOrigin,
       },
     }),
   ],
