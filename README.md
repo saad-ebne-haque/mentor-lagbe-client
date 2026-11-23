@@ -43,3 +43,24 @@ Set `IMGBB_API_KEY` in `client/.env` to enable profile photo uploads. Keep the k
 The profile page accepts JPG, PNG, and WebP files up to 5 MB. It also supports saving an image URL directly.
 
 The profile overview is read-only; use **Edit profile** to open the separate editor. Account security lets users change their password or deactivate their account. Deactivation blocks future sign-ins and keeps existing tuition, application, and payment records.
+
+## Express API authentication
+
+Better Auth's JWT plugin is enabled for server API authorization. Set
+`BETTER_AUTH_URL` to the same base URL used by the Better Auth deployment; the
+Express server uses the same value to verify token issuer and audience. A signed
+in client can request a token from `GET /api/auth/token` and send it as a Bearer
+token to protected Express endpoints.
+
+The pricing page uses this token to start the monthly Pro subscription through
+the Express API. Set `NEXT_PUBLIC_API_URL` in `client/.env.local` to the Express
+server origin, for example `http://localhost:5000/` for local work. Set the same
+variable in the client hosting environment to the deployed Express API's HTTPS
+origin. Do not add a path after the origin.
+
+The payment success and cancellation pages are available at `/payment/success`
+and `/payment/cancel`. Pro is activated only after the server verifies Stripe's
+webhook. For local testing, the webhook signing secret from `stripe listen`
+works only while forwarding to the local server. A deployed API needs a
+separate Stripe Sandbox webhook endpoint and its signing secret. The tuition
+and dashboard pages are not yet connected to the Express API.

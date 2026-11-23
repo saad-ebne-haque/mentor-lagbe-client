@@ -1,6 +1,7 @@
 import { mongodbAdapter } from "@better-auth/mongo-adapter"
 import { betterAuth } from "better-auth"
 import { APIError, createAuthMiddleware } from "better-auth/api"
+import { jwt } from "better-auth/plugins"
 import { MongoClient } from "mongodb"
 import { z } from "zod/mini"
 
@@ -92,4 +93,12 @@ export const auth = betterAuth({
   database: mongodbAdapter(db, {
     client,
   }),
+  plugins: [
+    jwt({
+      jwt: {
+        issuer: process.env.BETTER_AUTH_URL,
+        audience: process.env.BETTER_AUTH_URL,
+      },
+    }),
+  ],
 })
