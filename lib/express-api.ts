@@ -18,6 +18,17 @@ function getErrorMessage(value: unknown, fallback: string) {
   return fallback
 }
 
+export type StudentDashboardSummary = {
+  totalApplications: number
+  acceptedApplications: number
+  pendingApplications: number
+  plan: "free" | "pro"
+}
+
+function isNonNegativeInteger(value: unknown): value is number {
+  return typeof value === "number" && Number.isInteger(value) && value >= 0
+}
+
 function getApiOrigin() {
   const configuredUrl = process.env.NEXT_PUBLIC_API_URL?.trim()
 
@@ -45,8 +56,7 @@ function getApiOrigin() {
   return apiUrl.origin
 }
 
-export async function createProCheckoutSession() {
-  const apiOrigin = getApiOrigin()
+async function getApiToken() {
   const tokenResponse = await fetch("/api/auth/token", {
     credentials: "include",
     cache: "no-store",
@@ -55,7 +65,10 @@ export async function createProCheckoutSession() {
 
   if (!tokenResponse.ok) {
     throw new Error(
-      getErrorMessage(tokenBody, "Sign in again before starting checkout.")
+      getErrorMessage(
+        tokenBody,
+        "Sign in again before accessing your dashboard."
+      )
     )
   }
 
@@ -63,10 +76,53 @@ export async function createProCheckoutSession() {
     throw new Error("The authentication server did not return an API token.")
   }
 
+  return tokenBody.token
+}
+
+export async function getStudentDashboardSummary(): Promise<StudentDashboardSummary> {
+  const apiOrigin = getApiOrigin()
+  const token = await getApiToken()
+  const response = await fetch(`${apiOrigin}/api/dashboard/student`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    cache: "no-store",
+  })
+  const body = await readJson(response)
+
+  if (!response.ok) {
+    throw new Error(
+      getErrorMessage(body, "Unable to load your student dashboard.")
+    )
+  }
+
+  if (
+    !isRecord(body) ||
+    !isRecord(body.data) ||
+    !isNonNegativeInteger(body.data.totalApplications) ||
+    !isNonNegativeInteger(body.data.acceptedApplications) ||
+    !isNonNegativeInteger(body.data.pendingApplications) ||
+    (body.data.plan !== "free" && body.data.plan !== "pro")
+  ) {
+    throw new Error("The server returned invalid student dashboard data.")
+  }
+
+  return {
+    totalApplications: body.data.totalApplications,
+    acceptedApplications: body.data.acceptedApplications,
+    pendingApplications: body.data.pendingApplications,
+    plan: body.data.plan,
+  }
+}
+
+export async function createProCheckoutSession() {
+  const apiOrigin = getApiOrigin()
+  const token = await getApiToken()
+
   const checkoutResponse = await fetch(`${apiOrigin}/api/payments/checkout`, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${tokenBody.token}`,
+      Authorization: `Bearer ${token}`,
     },
     cache: "no-store",
   })

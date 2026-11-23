@@ -62,5 +62,8 @@ The payment success and cancellation pages are available at `/payment/success`
 and `/payment/cancel`. Pro is activated only after the server verifies Stripe's
 webhook. For local testing, the webhook signing secret from `stripe listen`
 works only while forwarding to the local server. A deployed API needs a
-separate Stripe Sandbox webhook endpoint and its signing secret. The tuition
-and dashboard pages are not yet connected to the Express API.
+separate Stripe Sandbox webhook endpoint and its signing secret.
+
+The student overview at `/dashboard/student` uses the Better Auth JWT to fetch
+application totals and the current plan from `GET /api/dashboard/student`.
+Other dashboard routes are separate and may not yet be implemented.
