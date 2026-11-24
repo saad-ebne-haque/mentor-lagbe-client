@@ -27,8 +27,47 @@ export type StudentDashboardSummary = {
   plan: "free" | "pro"
 }
 
+export type StudentApplication = {
+  id: string
+  tuitionTitle: string
+  tutorName: string | null
+  tutorEmail: string
+  monthlyFee: number
+  appliedAt: string
+  status: "pending" | "accepted" | "rejected"
+}
+
 function isNonNegativeInteger(value: unknown): value is number {
   return typeof value === "number" && Number.isInteger(value) && value >= 0
+}
+
+function isStudentApplicationRecord(
+  value: unknown,
+): value is {
+  _id: string
+  tuitionTitle: string
+  tutorName?: string | null
+  tutorEmail: string
+  monthlyFee: number
+  appliedAt: string
+  status: StudentApplication["status"]
+} {
+  return (
+    isRecord(value) &&
+    typeof value._id === "string" &&
+    typeof value.tuitionTitle === "string" &&
+    (value.tutorName === undefined ||
+      value.tutorName === null ||
+      typeof value.tutorName === "string") &&
+    typeof value.tutorEmail === "string" &&
+    typeof value.monthlyFee === "number" &&
+    Number.isFinite(value.monthlyFee) &&
+    value.monthlyFee >= 0 &&
+    typeof value.appliedAt === "string" &&
+    (value.status === "pending" ||
+      value.status === "accepted" ||
+      value.status === "rejected")
+  )
 }
 
 async function getApiToken() {
@@ -86,6 +125,68 @@ export async function getStudentDashboardSummary(): Promise<StudentDashboardSumm
     acceptedApplications: body.data.acceptedApplications,
     pendingApplications: body.data.pendingApplications,
     plan: body.data.plan,
+  }
+}
+
+export async function getStudentApplications(): Promise<StudentApplication[]> {
+  const token = await getApiToken()
+  const response = await fetch(`${apiOrigin}/api/applications/me`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    cache: "no-store",
+  })
+  const body = await readJson(response)
+
+  if (!response.ok) {
+    throw new Error(
+      getErrorMessage(body, "Unable to load your applications.")
+    )
+  }
+
+  if (!isRecord(body) || !Array.isArray(body.data)) {
+    throw new Error("The server returned invalid application data.")
+  }
+
+  return body.data.map((application) => {
+    if (!isStudentApplicationRecord(application)) {
+      throw new Error("The server returned invalid application data.")
+    }
+
+    return {
+      id: application._id,
+      tuitionTitle: application.tuitionTitle,
+      tutorName: application.tutorName ?? null,
+      tutorEmail: application.tutorEmail,
+      monthlyFee: application.monthlyFee,
+      appliedAt: application.appliedAt,
+      status: application.status,
+    }
+  })
+}
+
+export async function cancelStudentApplication(applicationId: string) {
+  const token = await getApiToken()
+  const response = await fetch(
+    `${apiOrigin}/api/applications/${encodeURIComponent(applicationId)}`,
+    {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      cache: "no-store",
+    },
+  )
+  const body = await readJson(response)
+
+  if (!response.ok) {
+    throw new Error(
+      getErrorMessage(body, "Unable to cancel this application.")
+    )
+  }
+
+  if (!isRecord(body) || body.success !== true) {
+    throw new Error("The server did not confirm the cancellation.")
   }
 }
 

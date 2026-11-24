@@ -66,5 +66,7 @@ works only while forwarding to the local server. A deployed API needs a
 separate Stripe Sandbox webhook endpoint and its signing secret.
 
 The student overview at `/dashboard/student` uses the Better Auth JWT to fetch
-application totals and the current plan from `GET /api/dashboard/student`.
-Other dashboard routes are separate and may not yet be implemented.
+application totals and the current plan from `GET /api/dashboard/student`. The
+`/dashboard/student/my-applications` page lists the signed-in student's
+applications, including tuition and tutor details, and allows cancellation while
+an application is pending.
